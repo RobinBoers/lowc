@@ -51,11 +51,32 @@ impl LowC {
     fn transform(&self, input: &str) -> String {
         let mut output = String::from(input);
 
-        for (ref regex, replacement) in &self.tags {
-            output = regex.replace_all(&output, replacement).to_string();
+        output = self.append_header(output);
+        output = self.replace_custom_tags(output);
+
+        return output;
+    }
+
+    fn append_header(&self, mut input: String) -> String {
+        let header = r#"
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        "#;
+
+        if let Some(index) = input.find("<head>") {
+            input.insert_str(index + "<head>".len(), header);
         }
 
-        output
+        return input;
+    }
+
+    fn replace_custom_tags(&self, mut input: String) -> String {
+        for (ref regex, replacement) in &self.tags {
+            input = regex.replace_all(&input, replacement).to_string();
+        }
+
+        return input;
     }
 }
 
