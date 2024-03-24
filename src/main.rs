@@ -34,13 +34,13 @@ impl LowC {
             pattern.push_str(&format!(r#"\s+{}="([^"]*?)""#, attr));
         }
 
-        let pat = if empty {
+        let closing_tag = if empty {
             format!(r#"\s*/?>"#)
         } else {
             format!(r#"\s*>(.*?)</{name}\s*>"#)
         };
 
-        pattern.push_str(&pat);
+        pattern.push_str(&closing_tag);
         pattern
     }
 
@@ -104,6 +104,7 @@ fn main() {
                     .file_name()
                     .expect("What the actual fuck is going on??")
                     .to_string_lossy();
+
                 println!("Usage: {binary} [path]\n");
                 return;
             }
