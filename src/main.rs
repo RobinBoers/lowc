@@ -1,7 +1,6 @@
 use std::fs;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
-use std::process;
 
 use regex::Regex;
 
@@ -11,9 +10,7 @@ struct LowC {
 
 impl LowC {
     fn new() -> Self {
-        Self {
-            tags: Vec::new(),
-        }
+        Self { tags: Vec::new() }
     }
 
     fn add_simple_tag(&mut self, args: Vec<&str>, replacement: &str) {
@@ -44,17 +41,14 @@ impl LowC {
         } else {
             pattern.push_str(&format!(r#"\s*>([^<]?)</{name}\s*>"#));
         }
-        
+
         String::from(pattern)
     }
 
-    fn transform(&self, input: &str) -> String {
-        let mut output = String::from(input);
-
-        output = self.append_header(output);
-        output = self.replace_custom_tags(output);
-
-        return output;
+    fn transform(&self, mut input: String) -> String {
+        input = self.append_header(input);
+        input = self.replace_custom_tags(input);
+        input
     }
 
     fn append_header(&self, mut input: String) -> String {
@@ -68,7 +62,7 @@ impl LowC {
             input.insert_str(index + "<head>".len(), header);
         }
 
-        return input;
+        input
     }
 
     fn replace_custom_tags(&self, mut input: String) -> String {
@@ -76,47 +70,53 @@ impl LowC {
             input = regex.replace_all(&input, replacement).to_string();
         }
 
-        return input;
+        input
     }
 }
 
-fn main() {
-    let input: String;
+fn main() -> Result<(), ()> {
     let mut lowc = LowC::new();
-    
+
     lowc.add_simple_tag(vec!["d"], "<strong><dfn>$1</dfn></strong>");
     lowc.add_simple_tag(vec!["t"], "<strong><cite>$1</cite></strong>");
     lowc.add_simple_tag(vec!["link", "href"], "<a href=\"$1\">$2</a>");
-    
-    lowc.add_empty_tag(vec!["tube", "watch"], "<iframe src=\"https://yewtu.be/embed/$1\"></iframe>");
+
+    lowc.add_empty_tag(
+        vec!["tube", "watch"],
+        "<iframe src=\"https://yewtu.be/embed/$1\"></iframe>",
+    );
     lowc.add_empty_tag(vec!["picture", "src"], "<figure><img src=\"$1\"></figure>");
-    lowc.add_empty_tag(vec!["picture", "src", "caption"], "<figure><img src=\"$1\" alt=\"$2\"><figcaption>$2</figcaption></figure>");
+    lowc.add_empty_tag(
+        vec!["picture", "src", "caption"],
+        "<figure><img src=\"$1\" alt=\"$2\"><figcaption>$2</figcaption></figure>",
+    );
 
     let argv: Vec<String> = std::env::args().collect();
 
-    if argv.len() > 1 {
+    let input: String = if argv.len() <= 1 {
+        from_stdin().expect("Error reading from stdin")
+    } else {
         let path = Path::new(&argv[0]);
         let source = &argv[1];
 
         match source.as_str() {
             "-h" | "--help" => {
-                let binary = Path::new(path).file_name().expect("What the actual fuck is going on??").to_string_lossy();
+                let binary = Path::new(path)
+                    .file_name()
+                    .expect("What the actual fuck is going on??")
+                    .to_string_lossy();
                 println!("Usage: {binary} [path]\n");
-                process::exit(0);
+                return Err(());
             }
-            "-" => {
-                input = from_stdin().expect("Error reading from stdin"); 
-            }
-            _ => {
-                input = from_file(source).expect("Error reading from file");
-            }
+            "-" => from_stdin().expect("Error reading from stdin"),
+            _ => from_file(source).expect("Error reading from file"),
         }
-    } else {
-        input = from_stdin().expect("Error reading from stdin");
-    }
+    };
 
-    let valid_html = lowc.transform(&input);
+    let valid_html = lowc.transform(input);
     println!("{}", valid_html);
+
+    Ok(())
 }
 
 fn from_file(path: &str) -> Result<String, io::Error> {
