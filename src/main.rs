@@ -1,8 +1,6 @@
-use std::fs;
-use std::io::{self, Read};
-use std::path::{Path, PathBuf};
-
 use regex::Regex;
+use std::path::{Path, PathBuf};
+use std::{fs, io};
 
 struct LowC {
     tags: Vec<(Regex, String)>,
@@ -13,12 +11,12 @@ impl LowC {
         Self { tags: Vec::new() }
     }
 
-    fn add_simple_tag(&mut self, args: Vec<&str>, replacement: &str) {
-        let pattern = self.create_tag_pattern(args, true);
+    fn add_simple_tag(&mut self, args: &[&str], replacement: &str) {
+        let pattern = self.create_tag_pattern(args, false);
         self.add_custom_tag(&pattern, replacement)
     }
 
-    fn add_empty_tag(&mut self, args: Vec<&str>, replacement: &str) {
+    fn add_empty_tag(&mut self, args: &[&str], replacement: &str) {
         let pattern = self.create_tag_pattern(args, true);
         self.add_custom_tag(&pattern, replacement)
     }
@@ -28,7 +26,7 @@ impl LowC {
         self.tags.push((regex, String::from(replacement)))
     }
 
-    fn create_tag_pattern(&self, args: Vec<&str>, empty: bool) -> String {
+    fn create_tag_pattern(&self, args: &[&str], empty: bool) -> String {
         let (name, attrs) = args.split_first().expect("No tag name provided!");
         let mut pattern = format!(r#"<{name}"#);
 
@@ -36,13 +34,14 @@ impl LowC {
             pattern.push_str(&format!(r#"\s+{}="([^"]*?)""#, attr));
         }
 
-        if empty {
-            pattern.push_str(&format!(r#"\s*/?>"#));
+        let pat = if empty {
+            format!(r#"\s*/?>"#)
         } else {
-            pattern.push_str(&format!(r#"\s*>([^<]?)</{name}\s*>"#));
-        }
+            format!(r#"\s*>([^<]?)</{name}\s*>"#)
+        };
 
-        String::from(pattern)
+        pattern.push_str(&pat);
+        pattern
     }
 
     fn transform(&self, mut input: String) -> String {
@@ -74,20 +73,20 @@ impl LowC {
     }
 }
 
-fn main() -> Result<(), ()> {
+fn main() {
     let mut lowc = LowC::new();
 
-    lowc.add_simple_tag(vec!["d"], "<strong><dfn>$1</dfn></strong>");
-    lowc.add_simple_tag(vec!["t"], "<strong><cite>$1</cite></strong>");
-    lowc.add_simple_tag(vec!["link", "href"], "<a href=\"$1\">$2</a>");
+    lowc.add_simple_tag(&["d"], "<strong><dfn>$1</dfn></strong>");
+    lowc.add_simple_tag(&["t"], "<strong><cite>$1</cite></strong>");
+    lowc.add_simple_tag(&["link", "href"], "<a href=\"$1\">$2</a>");
 
     lowc.add_empty_tag(
-        vec!["tube", "watch"],
+        &["tube", "watch"],
         "<iframe src=\"https://yewtu.be/embed/$1\"></iframe>",
     );
-    lowc.add_empty_tag(vec!["picture", "src"], "<figure><img src=\"$1\"></figure>");
+    lowc.add_empty_tag(&["picture", "src"], "<figure><img src=\"$1\"></figure>");
     lowc.add_empty_tag(
-        vec!["picture", "src", "caption"],
+        &["picture", "src", "caption"],
         "<figure><img src=\"$1\" alt=\"$2\"><figcaption>$2</figcaption></figure>",
     );
 
@@ -106,7 +105,7 @@ fn main() -> Result<(), ()> {
                     .expect("What the actual fuck is going on??")
                     .to_string_lossy();
                 println!("Usage: {binary} [path]\n");
-                return Err(());
+                return;
             }
             "-" => from_stdin().expect("Error reading from stdin"),
             _ => from_file(source).expect("Error reading from file"),
@@ -115,8 +114,6 @@ fn main() -> Result<(), ()> {
 
     let valid_html = lowc.transform(input);
     println!("{}", valid_html);
-
-    Ok(())
 }
 
 fn from_file(path: &str) -> Result<String, io::Error> {
@@ -125,7 +122,5 @@ fn from_file(path: &str) -> Result<String, io::Error> {
 }
 
 fn from_stdin() -> Result<String, io::Error> {
-    let mut buffer = String::new();
-    io::stdin().read_to_string(&mut buffer)?;
-    Ok(buffer)
+    io::read_to_string(io::stdin())
 }
