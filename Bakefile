@@ -4,6 +4,10 @@ build() {
   cargo build -r
 }
 
+install() {
+  cp -f target/release/lowc ~/bin/lowc
+}
+
 test() {
   cargo run examples/example.ltml
 }
