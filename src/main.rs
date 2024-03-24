@@ -14,7 +14,7 @@ impl LowC {
     }
 
     fn add_simple_tag(&mut self, args: Vec<&str>, replacement: &str) {
-        let pattern = self.create_tag_pattern(args, true);
+        let pattern = self.create_tag_pattern(args, false);
         self.add_custom_tag(&pattern, replacement)
     }
 
@@ -39,7 +39,7 @@ impl LowC {
         if empty {
             pattern.push_str(&format!(r#"\s*/?>"#));
         } else {
-            pattern.push_str(&format!(r#"\s*>([^<]?)</{name}\s*>"#));
+            pattern.push_str(&format!(r#"\s*>(.*?)</{name}\s*>"#));
         }
 
         String::from(pattern)
