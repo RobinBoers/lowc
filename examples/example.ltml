@@ -1,0 +1,19 @@
+<html>
+  <head>
+    <title>Something something</title>
+  </head>
+  <body>
+    <h1>Hallo!</h1>
+
+    <p>I saw this <link href="//really.cool">really cool thing</link>.</p>
+
+    <ul>
+      <li><d><code>d</code></d> is an inline title for a definition.</li>
+      <li><d><code>t</code></d> is an inline title for a citation.</li>
+    </ul>
+
+    <picture src="example.jpg" caption="lolz">
+    <picture src="example.jpg" />
+    <tube watch="wPODghAr3Vc" />
+  </body>
+</html>
