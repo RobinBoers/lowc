@@ -37,7 +37,7 @@ impl LowC {
         let pat = if empty {
             format!(r#"\s*/?>"#)
         } else {
-            format!(r#"\s*>([^<]?)</{name}\s*>"#)
+            format!(r#"\s*>(.*?)</{name}\s*>"#)
         };
 
         pattern.push_str(&pat);
