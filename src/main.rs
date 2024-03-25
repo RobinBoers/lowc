@@ -28,7 +28,7 @@ impl LowC {
 
     fn create_tag_pattern(&self, args: &[&str], empty: bool) -> String {
         let (name, attrs) = args.split_first().expect("No tag name provided!");
-        let mut pattern = format!(r#"<{name}"#);
+        let mut pattern = format!(r#"(?s)<{name}"#);
 
         for attr in attrs {
             pattern.push_str(&format!(r#"\s+{}="([^"]*?)""#, attr));
