@@ -84,6 +84,7 @@ fn main() {
         &["tube", "watch"],
         "<iframe src=\"https://yewtu.be/embed/$1\"></iframe>",
     );
+    lowc.add_empty_tag(&["badge", "src"], "<img width=\"88\" height=\"31\" src=\"$1\">");
     lowc.add_empty_tag(&["picture", "src"], "<figure><img src=\"$1\"></figure>");
     lowc.add_empty_tag(
         &["picture", "src", "caption"],
