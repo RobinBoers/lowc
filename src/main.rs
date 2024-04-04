@@ -84,7 +84,7 @@ fn main() {
         &["tube", "watch"],
         "<iframe src=\"https://yewtu.be/embed/$1\"></iframe>",
     );
-    lowc.add_empty_tag(&["button", "src"], "<img src=\"$1\" class=\"button\" width=\"88\" height=\"31\">");
+    lowc.add_empty_tag(&["button", "src"], "<img src=\"$1\" class=\"button\" width=\"88\" height=\"31\" alt=\"Button\">");
     lowc.add_empty_tag(&["picture", "src"], "<figure><img src=\"$1\"></figure>");
     lowc.add_empty_tag(
         &["picture", "src", "caption"],
