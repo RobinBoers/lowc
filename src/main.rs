@@ -1,6 +1,20 @@
-use regex::Regex;
-use std::path::{Path, PathBuf};
 use std::{fs, io};
+use std::path::{Path, PathBuf};
+use regex::Regex;
+use toml::Table;
+use platform_dirs::AppDirs;
+
+fn get_config(config_file: &str) -> Result<Table, io::Error> {
+    let directories = AppDirs::new(Some("lowc"), false).unwrap();
+    let config_path = directories.config_dir.join(config_file);
+    let toml = fs::read_to_string(config_path)?;
+
+    Ok(parse_config(toml))
+}
+
+fn parse_config(source: String) -> Table {
+    toml::from_str(&source).expect("Failed to parse TOML")
+}
 
 struct LowC {
     tags: Vec<(Regex, String)>,
@@ -46,6 +60,7 @@ impl LowC {
 
     fn transform(&self, mut input: String) -> String {
         input = self.append_header(input);
+        input = self.replace_mentions(input);
         input = self.replace_custom_tags(input);
         input
     }
@@ -55,6 +70,9 @@ impl LowC {
             <meta charset="UTF-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+            <!-- Google, please don't mess with my lovingly handcrafted HTML -->
+            <meta name="googlebot" content="notranslate">
         "#;
 
         if let Some(index) = input.find("<head>") {
@@ -71,6 +89,22 @@ impl LowC {
 
         input
     }
+    
+    fn replace_mentions(&self, mut input: String) -> String {
+        if let Ok(config) = get_config("mentions.toml") {            
+            for (username, data) in config {
+                let site = data["site"].as_str().expect(&format!("Missing 'site' key for {}.", username));
+                let mention = data["mention"].as_bool().unwrap_or(false);
+
+                let pattern = Regex::new(&format!(r"(@{})", username)).expect("Invalid regex pattern");
+                let replacement = format!(r#"<a href="{}" data-mention="{}" class="u-in-reply-to">$1</a>"#, site, mention);
+
+                input = pattern.replace_all(&input, replacement).to_string();
+            }
+        }
+
+        input
+    }
 }
 
 fn main() {
@@ -80,16 +114,10 @@ fn main() {
     lowc.add_simple_tag(&["t"], "<strong><cite>$1</cite></strong>");
     lowc.add_simple_tag(&["link", "href"], "<a href=\"$1\">$2</a>");
 
-    lowc.add_empty_tag(
-        &["tube", "watch"],
-        "<iframe src=\"https://yewtu.be/embed/$1\"></iframe>",
-    );
+    lowc.add_empty_tag(&["tube", "watch"], "<iframe src=\"https://yewtu.be/embed/$1\"></iframe>",);
     lowc.add_empty_tag(&["button", "src"], "<img src=\"$1\" class=\"button\" width=\"88\" height=\"31\" alt=\"Button\">");
     lowc.add_empty_tag(&["picture", "src"], "<figure><img src=\"$1\"></figure>");
-    lowc.add_empty_tag(
-        &["picture", "src", "caption"],
-        "<figure><img src=\"$1\" alt=\"$2\"><figcaption>$2</figcaption></figure>",
-    );
+    lowc.add_empty_tag(&["picture", "src", "caption"], "<figure><img src=\"$1\" alt=\"$2\"><figcaption>$2</figcaption></figure>");
 
     let argv: Vec<String> = std::env::args().collect();
 

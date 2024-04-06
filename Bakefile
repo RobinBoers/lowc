@@ -9,7 +9,7 @@ install() {
 }
 
 test() {
-  cargo run examples/example.ltml
+  cargo run examples/example.html
 }
 
 clean() {
