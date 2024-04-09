@@ -92,12 +92,12 @@ impl LowC {
     
     fn replace_mentions(&self, mut input: String) -> String {
         if let Ok(config) = get_config("mentions.toml") {            
-            for (username, data) in config {
-                let site = data["site"].as_str().expect(&format!("Missing 'site' key for {}.", username));
+            for (handle, data) in config {
+                let site = data["site"].as_str().expect(&format!("Missing 'site' key for {}.", handle));
                 let mention = data["mention"].as_bool().unwrap_or(false);
 
-                let pattern = Regex::new(&format!(r"(@{})", username)).expect("Invalid regex pattern");
-                let replacement = format!(r#"<a href="{}" data-mention="{}" class="u-in-reply-to">$1</a>"#, site, mention);
+                let pattern = Regex::new(&format!(r"(@{})", handle)).expect("Invalid regex pattern");
+                let replacement = format!(r#"<a href="{}" data-handle="{}" data-mention="{}" class="u-in-reply-to">$1</a>"#, site, handle, mention);
 
                 input = pattern.replace_all(&input, replacement).to_string();
             }
