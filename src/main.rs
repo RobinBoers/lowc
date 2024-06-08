@@ -128,7 +128,10 @@ fn main() {
         let source = &argv[1];
 
         match source.as_str() {
-            "-h" | "--help" => { usage(path); return; },
+            "-h" | "--help" => {
+                usage(path);
+                return;
+            },
             "-" => from_stdin().expect("Error reading from stdin"),
             _ => from_file(source).expect("Error reading from file"),
         }
