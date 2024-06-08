@@ -124,19 +124,11 @@ fn main() {
     let input: String = if argv.len() <= 1 {
         from_stdin().expect("Error reading from stdin")
     } else {
-        let path = Path::new(&argv[0]);
+        let path = &argv[0];
         let source = &argv[1];
 
         match source.as_str() {
-            "-h" | "--help" => {
-                let binary = Path::new(path)
-                    .file_name()
-                    .expect("What the actual fuck is going on??")
-                    .to_string_lossy();
-
-                println!("Usage: {binary} [path]\n");
-                return;
-            }
+            "-h" | "--help" => { usage(path); return; },
             "-" => from_stdin().expect("Error reading from stdin"),
             _ => from_file(source).expect("Error reading from file"),
         }
@@ -144,6 +136,15 @@ fn main() {
 
     let valid_html = lowc.transform(input);
     println!("{}", valid_html);
+}
+
+fn usage(path: &str) {
+    let binary = Path::new(path)
+        .file_name()
+        .expect("What the actual fuck is going on??")
+        .to_string_lossy();
+
+    println!("Usage: {binary} [path]\n");
 }
 
 fn from_file(path: &str) -> Result<String, io::Error> {
